@@ -13,17 +13,11 @@ static const unsigned long DEBOUNCE_BOUND = (unsigned long)2000000;
 // The current debounce value when reading keys
 #define DEBOUNCE_VALUE 10000
 
-// The keys option that can be pressed while in operational state
-#define KEY_OP_START_PRESSED 0X01
-#define KEY_OP_STOP_PRESSED  0X02
-#define KEY_OP_ENTER_CONFIG  0X04
-#define KEY_OP_DISPLAY_LOGO  0X08
-
-// The keys option that can be pressed while in config state
-#define KEY_CFG_TIME_UP          0X01
-#define KEY_CFG_TIME_DOWN        0X02
-#define KEY_CFG_CONFIG_OK        0X04
-#define KEY_CFG_CHANGE_TIME_UNIT 0X08
+// The keys currently available to be read by this device driver
+#define KEY_ONE   0X01
+#define KEY_TWO   0X02
+#define KEY_THREE 0X04
+#define KEY_FOUR  0X08
 
 // A struct that represents a volicity instance when using continuos keyboard input
 struct velocity {
