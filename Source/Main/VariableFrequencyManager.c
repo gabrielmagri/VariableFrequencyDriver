@@ -25,7 +25,7 @@ void ConfigRoutine(void);
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-unsigned short _state = SM_NORMAL;
+unsigned short _state = SM_WAIT;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -40,11 +40,12 @@ void VariableFrequencyManager_Init(void)
 {
     PLL_Init();
     LEDs_Init();
-    PwmOuputController_Init();
+    PwmOuputController_Init(60);
     DisplayManager_Init();
 
     /* Display the Unisinos logo into the whole screen */
     DisplayManager_DisplayUnisinosLogo();
+
 }
 
 /* ********VariableFrequencyManager_Run**********
@@ -56,6 +57,9 @@ void VariableFrequencyManager_Run(void)
 {
     switch(_state)
     {
+        case SM_WAIT:
+            PwmOuputController_Start();
+            break;
         case SM_NORMAL:
             NormalRoutine();
             break;

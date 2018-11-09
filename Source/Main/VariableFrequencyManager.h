@@ -10,6 +10,8 @@
 
 #define SM_NORMAL      0
 #define SM_CONFIGURING 1
+//TODO remove, just for debug
+#define SM_WAIT 2
 
 /* ********VariableFrequencyManager_Init**********
  * This function initialize all the device drivers
