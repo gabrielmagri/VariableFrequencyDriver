@@ -55,9 +55,11 @@ void VariableFrequencyManager_Init(void)
  */
 void VariableFrequencyManager_Run(void)
 {
+    int var = 0;
     switch(_state)
     {
         case SM_WAIT:
+            for (var = 0; var < 100000; ++var);
             PwmOuputController_Start();
             break;
         case SM_NORMAL:

@@ -48,6 +48,12 @@ void PwmPin2Toogle(void);
 /* */
 void UpdateTonTable(void);
 
+/* */
+bool CheckForStartRequired(void);
+
+/* */
+bool CheckForStopRequired(void);
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -188,6 +194,17 @@ void PwmOuputController_Stop(void)
     }
 }
 
+bool CheckForStartRequired(void)
+{
+    return (_buttonClicked == START_CLICKED);
+}
+
+/* */
+bool CheckForStopRequired(void)
+{
+    return (_buttonClicked == STOP_CLICKED);
+}
+
 /* **********PwmOuputController_UpdateFrequency************
  * Update the frequency set to the motor operate
  * Input: freq - The new frequency {unsigned short}
@@ -203,74 +220,87 @@ void SysTick_Handler(void)
 
     PwmPin2Toogle();
 
-    // ------------------------------------------------------------------
-    // Check for button clicks notified by any caller.
-    // ------------------------------------------------------------------
-    switch(_buttonClicked)
-    {
-        case START_CLICKED:
-            _motorState = SM_START_REQUIRED;
-            _buttonClicked = NONE_CLICKED; // Clear the click
-            break;
-        case STOP_CLICKED:
-            _motorState = SM_STOP_REQUIRED;
-            _buttonClicked = NONE_CLICKED; // Clear the click
-            break;
-        case NONE_CLICKED:
-            break;
-        default:
-            break;
-    }
-
+    /* Unique motor state machine routine */
     switch(_motorState)
     {
-        case SM_START_REQUIRED:
-//            if( _tonTable[_tonIndex] != 0)
-//            {
-//                PwmPinOn();
-//            }
-            _motorState = SM_STARTED;
-            break;
 
-        case SM_STOP_REQUIRED:
+        case SM_STOPPED:
 
-            PwmPinOff();
-            _motorState = SM_STOPPED;
+            LEDs_None();
+
+            if(CheckForStartRequired())
+            {
+                _motorState = SM_STARTED;
+                _interruptsCounter = 0;
+                _tonIndex = 0;
+            }
+
             break;
 
         case SM_STARTED:
 
-            /* If reached the cycles values for ton must make proceed to toff */
-            if( (_interruptsCounter + 1) == _tonTable[_tonIndex] )
+            LEDs_Green();
+
+            if(CheckForStopRequired())
             {
                 PwmPinOff();
-                _interruptsCounter++;
             }
-            else if( (_interruptsCounter + 1) == _interruptsInPwmCycle )
+            else
             {
-                PwmPinOn();
-                if(_tonIndex < 35)
-                {
-                    _tonIndex++;
-                }
-                else
-                {
-                    _tonIndex = 0;
-                }
-                _interruptsCounter = 0;
 
-            } else {
+                /* Must verify that there is at least one cycle in ton at the first cycle*/
+                if( ( _interruptsCounter == 0 ) && ( _tonTable[_tonIndex] != 0 ) )
+                {
+                    PwmPinOn();
+                }
+
+                /* If reached the cycles values for ton and it's also the total number of pwm cycles
+                 * The function shall execute the clean up and the index increment
+                 * */
+                else if( ( _interruptsCounter == _tonTable[_tonIndex] ) && ( _interruptsCounter == _interruptsInPwmCycle ) )
+                {
+                    PwmPinOff();
+                    if(_tonIndex < 35)
+                    {
+                       _tonIndex++;
+                    }
+                    else
+                    {
+                       _tonIndex = 0;
+                    }
+                    _interruptsCounter = 0;
+                    break;
+                }
+
+                /* If reached the cycles values for ton must make proceed to toff */
+                else if( _interruptsCounter == _tonTable[_tonIndex] )
+                {
+                    PwmPinOff();
+                }
+
+                else if( _interruptsCounter == _interruptsInPwmCycle )
+                {
+                    if(_tonIndex < 35)
+                    {
+                       _tonIndex++;
+                    }
+                    else
+                    {
+                       _tonIndex = 0;
+                    }
+                    _interruptsCounter = 0;
+                    break;
+                }
+
                 _interruptsCounter++;
-            }
-            break;
 
-        case SM_STOPPED:
+            }
 
             break;
 
         case SM_SLEEP:
 
-            LEDs_Blue();
+            LEDs_Red();
 
             _interruptsCounter++;
             if(_interruptsCounter >= 36)
