@@ -256,7 +256,6 @@ ResetISR(void)
 static void
 NmiSR(void)
 {
-    LEDs_Red();
     //
     // Enter an infinite loop.
     //
@@ -275,7 +274,6 @@ NmiSR(void)
 static void
 FaultISR(void)
 {
-    LEDs_Green();
     //
     // Enter an infinite loop.
     //
@@ -297,7 +295,6 @@ IntDefaultHandler(void)
     //
     // Go into an infinite loop.
     //
-    LEDs_Blue();
     while(1)
     {
     }

@@ -15,6 +15,9 @@
 #define SM_STARTED  0
 #define SM_STOPPED  1
 
+//TODO update the bellow item
+#define DEFAULT_RELOAD 1
+
 /* ***************PwmOuputController_Init******************
  * This function performs the whole initialization needed
  * for this module

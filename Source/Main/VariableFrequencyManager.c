@@ -8,6 +8,7 @@
 #include "../DeviceDrivers/PLL.h"
 #include "../DeviceDrivers/LEDs.h"
 #include "VariableFrequencyManager.h"
+#include "PwmOutputController.h"
 #include "DisplayManager.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -24,7 +25,7 @@ void ConfigRoutine(void);
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-unsigned short _state = SM_INITIALIZING;
+unsigned short _state = SM_NORMAL;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -39,6 +40,7 @@ void VariableFrequencyManager_Init(void)
 {
     PLL_Init();
     LEDs_Init();
+    PwmOuputController_Init();
     DisplayManager_Init();
 
     /* Display the Unisinos logo into the whole screen */
@@ -66,6 +68,17 @@ void VariableFrequencyManager_Run(void)
 }
 
 
+/* Execute the normal toutine  */
+void NormalRoutine(void)
+{
+
+}
+
+/* Execute the configuration routine */
+void ConfigRoutine(void)
+{
+
+}
 
 
 
