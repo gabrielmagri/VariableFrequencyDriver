@@ -49,7 +49,7 @@ unsigned long Keyboard_In(void) {
 	static char _outputed                            = 0;
 	unsigned long _currentStatus                     = 0;
 	
-	// Read the current status for keys START and STOP
+	// Read the current keys input status
 	_currentStatus = (GPIO_PORTE_DATA_R & 0X0F);
 	
 	// if there is some key pressed and the value still the same increment the debounce counter.
@@ -97,7 +97,7 @@ unsigned long Keyboard_Continuous_In(void) {
 	// A flag that indicate that we have outputed a key pressed event
 	static char _outputed                           = 0;
 	
-	// Read the current status for keys START and STOP
+	// Read the current keys input status
 	_currentStatus = (GPIO_PORTE_DATA_R & 0X0F);
 	
 	// if there is some key pressed and the value still the same increment the debounce counter.

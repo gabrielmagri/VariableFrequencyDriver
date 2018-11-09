@@ -5,30 +5,18 @@
  *      Author: GMAGRI
  */
 
-#include "../DeviceDrivers/PLL.h"
-#include "../DeviceDrivers/LEDs.h"
-#include "../DeviceDrivers/Nokia5110.h"
+#include"VariableFrequencyManager.h"
 
 void main(void)
 {
 
-    PLL_Init();
-    LEDs_Init();
-    Nokia5110_Init();
-
-
-    /* Display the Unisinos logo into the whole screen */
-    Nokia5110_Clear();
-    Nokia5110_PrintBMP(0, 47, _logoUni, 0);
-    Nokia5110_DisplayBuffer();
+    /* Call the manager initialization routine */
+    VariableFrequencyManager_Init();
 
     for(;;)
     {
-        LEDs_Blue();
+        /* Run the periodic execution logic */
+        VariableFrequencyManager_Run();
     }
 
 }
-
-
-
-
