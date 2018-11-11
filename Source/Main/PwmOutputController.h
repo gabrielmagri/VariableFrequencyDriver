@@ -8,6 +8,9 @@
 #ifndef SOURCE_MAIN_PWMOUTPUTCONTROLLER_H_
 #define SOURCE_MAIN_PWMOUTPUTCONTROLLER_H_
 
+/* The table that represents all the 36 values from 0 to 180 degrees from 5 by 5;
+ * The table is used to calculate how many cycles represent the current ton time
+ *  assuming 1 as being all the 36 pwm cycles and 0 as being none. */
 static const double _SinOutTable[] ={
     0.087155743 ,0.173648178 ,0.258819045 ,0.342020143 ,0.422618262 ,0.5 ,0.573576436 ,0.64278761 ,0.707106781 ,
     0.766044443 ,0.819152044 ,0.866025404 ,0.906307787 ,0.939692621 ,0.965925826 ,0.984807753 ,0.996194698 ,1 ,
@@ -15,36 +18,27 @@ static const double _SinOutTable[] ={
     0.707106781 ,0.64278761 ,0.573576436 ,0.5 ,0.422618262 ,0.342020143 ,0.258819045 ,0.173648178 ,0.087155743 ,0
 };
 
-
-
-#define NONE_CLICKED  0
-#define START_CLICKED 1
-#define STOP_CLICKED  2
-
+/* All the possible states for the button entry represents the intent to start/stop the motor */
+typedef enum {NONE_CLICKED, START_CLICKED, STOP_CLICKED} ButtonState;
+/* All the values that the motor state machine can assume */
 typedef enum {SM_STARTED, SM_STOPPED} MotorState;
+/* The enumeration values that allow to select all the available pwm pins */
 typedef enum {PWM_PIN_HI, PWM_PIN_LOW, PWM_PIN_DEBUG} PwmPin;
-
-//#define SM_STARTED        0
-//#define SM_STOPPED        1
-//#define SM_START_REQUIRED 2
-//#define SM_STOP_REQUIRED  3
-///* Just for debug */
-//#define SM_SLEEP  4
 
 /* Default reload value based on the calculations and explained into the .c file */
 #define DEFAULT_RELOAD 342
-/*  */
+/* The Systick Interrupts frequency, used for futher calculations */
 #define INTERRUPT_FREQ 233280
-/*  */
+/* The desired number of pwm cycles within the full sine wave, used for futher calculations */
 #define PWM_CYCLE_WITHIN_FULL_SINE 72
 
 /* ***************PwmOuputController_Init******************
  * This function performs the whole initialization needed
  * for this module
- * Input: freq - The fundamental frequency {Hz}
+ * Input: freq - The fundamental frequency {unsigned short} {Hz}
  * Output: none
  */
-void PwmOuputController_Init(short freq);
+void PwmOuputController_Init(unsigned short freq);
 
 /* ***************PwmOuputController_Start******************
  * Start the motor with the currently configured frequency
@@ -62,7 +56,7 @@ void PwmOuputController_Stop(void);
 
 /* **********PwmOuputController_UpdateFrequency************
  * Update the frequency set to the motor operate
- * Input: freq - The new frequency {unsigned short}
+ * Input: freq - The new frequency {unsigned short} {Hz}
  * Output: none
  */
 void PwmOuputController_UpdateFrequency(unsigned short freq);
