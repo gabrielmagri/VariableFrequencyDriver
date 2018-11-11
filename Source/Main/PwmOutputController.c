@@ -45,6 +45,9 @@ void PwmPinOff(void);
 /* Toogle the pin within every Systick Interrupt, used for debug */
 void InterruptPinToogle(void);
 
+/* Toogle the debug pin */
+void DebugPinToogle(void);
+
 /* Recalculate the entire ton table base on the current setted frequency */
 void UpdateTonTable(void);
 
@@ -57,6 +60,9 @@ bool CheckForStopRequired(void);
 /* Update the current index within the ton table */
 void UpdateIndex(void);
 
+/* Copy the preTonTable update value into the current ton table */
+void CopyPreTonIntoTon(void);
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -64,6 +70,7 @@ void UpdateIndex(void);
 MotorState     _motorState    = SM_STOPPED;   // The motor control state initiate as stopped.
 PwmPin         _pwmPin        = PWM_PIN_HI;   // The pin that is currently selected for output.
 ButtonState    _buttonClicked = NONE_CLICKED; // The variable that holds the button events.
+TonTable       _preTonTable;
 unsigned int   _frequency     = 60;           // The variable that holds the fundamental frequency
 unsigned int   _interruptsInPwmCycle = 0;     // The variable that represents the amount of cycles that represent a full pwm cycle
 unsigned int   _tonTable[36];                 // The table that holds the dynamically calculated ton times
@@ -85,11 +92,13 @@ void PwmOuputController_Init(unsigned short freq)
 
     /* Calls the function that update the sine frequency */
     PwmOuputController_UpdateFrequency(freq);
+    /* In the first execution consume the preTonTable */
+    CopyPreTonIntoTon();
 
     /* Initialize drivers */
     IntMasterEnable(); // Enable interrupts that are used within this module
-    LEDs_Init();       // Initialize the LEDs driver
     PwmPinsInit();     // Initialize the Driver for the pwm pins
+    LEDs_Init();       // Initialize the LEDs driver
     Systick_Init();    // Initilize the Systick Interrupt
 }
 
@@ -119,12 +128,12 @@ void PwmPinsInit(void)
     unsigned long volatile delay;
     SYSCTL_RCGC2_R |= 0x00000002;     // activate port B
     delay = SYSCTL_RCGC2_R;           // execute some delay
-    GPIO_PORTB_AMSEL_R &= ~0x07;      // no analog in PB0-2
-    GPIO_PORTB_PCTL_R &= ~0x00000FFF; // regular function on PB0-2
-    GPIO_PORTB_DIR_R |= 0x07;         // make PB0-2 OUT
+    GPIO_PORTB_AMSEL_R &= ~0x0F;      // no analog in PB0-2
+    GPIO_PORTB_PCTL_R &= ~0x0000FFFF; // regular function on PB0-2
+    GPIO_PORTB_DIR_R |= 0x0F;         // make PB0-2 OUT
     //GPIO_PORTB_DR8R_R |= 0x07;      // can drive up to 8mA out
-    GPIO_PORTB_AFSEL_R &= ~0x07;      // disable alt funct on PB0-2
-    GPIO_PORTB_DEN_R |= 0x07;         // enable digital I/O on PB0-2
+    GPIO_PORTB_AFSEL_R &= ~0x0F;      // disable alt funct on PB0-2
+    GPIO_PORTB_DEN_R |= 0x0F;         // enable digital I/O on PB0-2
 }
 
 /* **************UpdateTonTable*********************
@@ -140,9 +149,28 @@ void UpdateTonTable(void)
         /* As both sine wave semicycles are equivalent we calculate and output base on one semicycle, wich leads to 36 points.
          * We first multiply the position of the sine wave table for the already calculated amount of interruts within one (1/36) pwm cycle
          * The result of it is a double value that corresponds to the total pwm cycles that we need to stay in HI.
-         * By adding +0.5 and casting to int we are executing a "round to the nearest" with the ton value */
-        _tonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
+         * By adding +0.5 and casting to int we are executing a "round to the nearest" with the ton value
+         * The pre ton table is full calculated into tihs routine and after is consulted to verify if there is updates or not */
+        _preTonTable.preTonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
     }
+
+    /* Sinalize that the table is now updated with new values */
+    _preTonTable.tState = UPDATED;
+}
+
+/* **************CopyPreTonIntoTon*********************
+ * Copy the preTonTable update value into the current ton table
+ * Input: none
+ * Output: none
+ */
+void CopyPreTonIntoTon(void)
+{
+    int i=0;
+    for(i=0; i<36; i++)
+    {
+        _tonTable[i] = _preTonTable.preTonTable[i];
+    }
+    _preTonTable.tState = CONSUMED;
 }
 
 /* ***********************PwmPinOn***********************
@@ -175,6 +203,16 @@ void PwmPinOff(void)
 void InterruptPinToogle(void)
 {
     GPIO_PORTB_DATA_R =  (GPIO_PORTB_DATA_R ^ 0x04);
+}
+
+/* **************InterruptPinToogle*********************
+ * Toogle the debug pin
+ * Input: none
+ * Output: none
+ */
+void DebugPinToogle(void)
+{
+    GPIO_PORTB_DATA_R =  (GPIO_PORTB_DATA_R ^ 0x08);
 }
 
 /* ***************PwmOuputController_Start******************
@@ -244,8 +282,18 @@ void UpdateIndex(void)
     }
     else
     {
+
+       /* Toogle the selected pin for outputing */
        if(_pwmPin == PWM_PIN_HI) _pwmPin = PWM_PIN_LOW;
        else if(_pwmPin == PWM_PIN_LOW) _pwmPin = PWM_PIN_HI;
+
+       /* At the end of a full sine wave cycle verify if there is new ton table */
+       if( _preTonTable.tState == UPDATED )
+       {
+           /* Consume it */
+           CopyPreTonIntoTon();
+       }
+
        _tonIndex = 0;
     }
     _interruptsCounter = 0;
@@ -330,6 +378,10 @@ void SysTick_Handler(void)
                 {
                     UpdateIndex();
                     break;
+                }
+                else
+                {
+
                 }
 
                 _interruptsCounter++;

@@ -24,6 +24,15 @@ typedef enum {NONE_CLICKED, START_CLICKED, STOP_CLICKED} ButtonState;
 typedef enum {SM_STARTED, SM_STOPPED} MotorState;
 /* The enumeration values that allow to select all the available pwm pins */
 typedef enum {PWM_PIN_HI, PWM_PIN_LOW, PWM_PIN_DEBUG} PwmPin;
+/* The possible enumeration values for state of the preTonTable */
+typedef enum {UPDATED, CONSUMED} TableState;
+
+/* A struct that allows to save the current state of the ton Table that is dynamically calculated */
+typedef struct
+{
+    unsigned int preTonTable[36];
+    TableState tState;
+} TonTable;
 
 /* Default reload value based on the calculations and explained into the .c file */
 #define DEFAULT_RELOAD 342
