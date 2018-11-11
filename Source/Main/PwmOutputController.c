@@ -36,25 +36,25 @@ void Systick_Init(void);
 /* Initialize the pins use to output the pwm signal */
 void PwmPinsInit(void);
 
-/* */
+/* Make the current selected pwm pin HI {1} */
 void PwmPinOn(void);
 
-/* */
+/* Make the current selected pwm pin LOW {0} */
 void PwmPinOff(void);
 
-/* */
-void PwmPin2Toogle(void);
+/* Toogle the pin within every Systick Interrupt, used for debug */
+void InterruptPinToogle(void);
 
-/* */
+/* Recalculate the entire ton table base on the current setted frequency */
 void UpdateTonTable(void);
 
-/* */
+/* Evaluate if it was required to start the motor */
 bool CheckForStartRequired(void);
 
-/* */
+/* Evaluate if it was required to stop the motor */
 bool CheckForStopRequired(void);
 
-/* */
+/* Update the current index within the ton table */
 void UpdateIndex(void);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ void UpdateIndex(void);
 
 MotorState     _motorState    = SM_STOPPED;   // The motor control state initiate as stopped.
 PwmPin         _pwmPin        = PWM_PIN_HI;   // The pin that is currently selected for output.
-unsigned char  _buttonClicked = NONE_CLICKED; // The variable that holds the button events.
+ButtonState    _buttonClicked = NONE_CLICKED; // The variable that holds the button events.
 unsigned int   _frequency     = 60;           // The variable that holds the fundamental frequency
 unsigned int   _interruptsInPwmCycle = 0;     // The variable that represents the amount of cycles that represent a full pwm cycle
 unsigned int   _tonTable[36];                 // The table that holds the dynamically calculated ton times
@@ -83,13 +83,14 @@ unsigned long  _interruptsCounter = 0;        // The counter of already reached 
 void PwmOuputController_Init(unsigned short freq)
 {
 
+    /* Calls the function that update the sine frequency */
     PwmOuputController_UpdateFrequency(freq);
 
     /* Initialize drivers */
     IntMasterEnable(); // Enable interrupts that are used within this module
-    LEDs_Init();
-    PwmPinsInit();
-    Systick_Init();
+    LEDs_Init();       // Initialize the LEDs driver
+    PwmPinsInit();     // Initialize the Driver for the pwm pins
+    Systick_Init();    // Initilize the Systick Interrupt
 }
 
 /* ************Systick_Init*******************
@@ -109,7 +110,7 @@ void Systick_Init(void)
 }
 
 /* **************PwmPinsInit*********************
- * Initialize the two pwm pins
+ * Initialize the two pwm pins and the debug pin
  * Input: none
  * Output: none
  */
@@ -136,32 +137,42 @@ void UpdateTonTable(void)
     int i=0;
     for(i=0; i<36; i++)
     {
-        //TODO improve comments
-        /*  */
+        /* As both sine wave semicycles are equivalent we calculate and output base on one semicycle, wich leads to 36 points.
+         * We first multiply the position of the sine wave table for the already calculated amount of interruts within one (1/36) pwm cycle
+         * The result of it is a double value that corresponds to the total pwm cycles that we need to stay in HI.
+         * By adding +0.5 and casting to int we are executing a "round to the nearest" with the ton value */
         _tonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
     }
 }
 
-/* */
+/* ***********************PwmPinOn***********************
+ * Make the current selected pwm pin HI {1}
+ * Input: none
+ * Output: none
+ */
 void PwmPinOn(void)
 {
     if(_pwmPin == PWM_PIN_HI) GPIO_PORTB_DATA_R |= 0x01;
     if(_pwmPin == PWM_PIN_LOW) GPIO_PORTB_DATA_R |= 0x02;
 }
 
-/* */
+/* ***********************PwmPinOff***********************
+ * Make the current selected pwm pin LOW {0}
+ * Input: none
+ * Output: none
+ */
 void PwmPinOff(void)
 {
     if(_pwmPin == PWM_PIN_HI) GPIO_PORTB_DATA_R &= ~0x01;
     if(_pwmPin == PWM_PIN_LOW) GPIO_PORTB_DATA_R &= ~0x02;
 }
 
-/* **************PwmPin2Toogle*********************
- * Toogle one pin of the pwm pins
+/* **************InterruptPinToogle*********************
+ * Toogle the pin within every Systick Interrupt, used for debug
  * Input: none
  * Output: none
  */
-void PwmPin2Toogle(void)
+void InterruptPinToogle(void)
 {
     GPIO_PORTB_DATA_R =  (GPIO_PORTB_DATA_R ^ 0x04);
 }
@@ -198,18 +209,33 @@ void PwmOuputController_Stop(void)
     }
 }
 
+/* ***************CheckForStartRequired******************
+ * Evaluate if it was required to start the motor
+ * Input: none
+ * Output: bool
+ */
 bool CheckForStartRequired(void)
 {
     return (_buttonClicked == START_CLICKED);
 }
 
-/* */
+/* ***************CheckForStopRequired******************
+ * Evaluate if it was required to stop the motor
+ * Input: none
+ * Output: bool
+ */
 bool CheckForStopRequired(void)
 {
     return (_buttonClicked == STOP_CLICKED);
 }
 
-/**/
+/* ***************CheckForStopRequired******************
+ * Update the current index within the ton table;
+ * Toogle the current selected pwm pin;
+ * Reset the interrupts counter;
+ * Input: none
+ * Output: none
+ */
 void UpdateIndex(void)
 {
     if(_tonIndex < 35)
@@ -232,16 +258,22 @@ void UpdateIndex(void)
  */
 void PwmOuputController_UpdateFrequency(unsigned short freq)
 {
+    /* Update the setted frequency */
     _frequency = freq;
+
+    /* Calculate the total interrupts units that compose the full pwm cycle */
     _interruptsInPwmCycle = INTERRUPT_FREQ / (PWM_CYCLE_WITHIN_FULL_SINE * _frequency);
 
     UpdateTonTable();
 }
 
+/* This is the ISR (Interrupt Service Routin) that handle the Systick Interrupts
+ * The ISR is responsible mainly for the output of the pwm pins, based on the frequency
+ *  and the motor state, and for updating the LEDs that sinalize the motor state to the user. */
 void SysTick_Handler(void)
 {
 
-    PwmPin2Toogle();
+    InterruptPinToogle();
 
     /* Unique motor state machine routine */
     switch(_motorState)
@@ -275,9 +307,9 @@ void SysTick_Handler(void)
                     PwmPinOn();
                 }
 
-                /* If reached the cycles values for ton and it's also the total number of pwm cycles
-                 * The function shall execute the clean up and the index increment
-                 * */
+                * If reached the cycles values for ton and it's also the total number of pwm cycles
+                                 * The function shall execute the pwm pin off, the resets and the pwm selected pin toogle
+                                 * */
                 else if( ( _interruptsCounter == _tonTable[_tonIndex] ) && ( _interruptsCounter == _interruptsInPwmCycle ) )
                 {
                     PwmPinOff();
@@ -285,12 +317,15 @@ void SysTick_Handler(void)
                     break;
                 }
 
-                /* If reached the cycles values for ton must make proceed to toff */
+                /* If reached the cycles values for ton must make the pin off */
                 else if( _interruptsCounter == _tonTable[_tonIndex] )
                 {
                     PwmPinOff();
                 }
 
+                /* If reached the total number of pwm cycles, the function shall execute
+                 *  the resets and the pwm selected pin toogle.
+                 * */
                 else if( _interruptsCounter == _interruptsInPwmCycle )
                 {
                     UpdateIndex();
@@ -308,22 +343,3 @@ void SysTick_Handler(void)
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
