@@ -21,7 +21,8 @@ static const double _SinOutTable[] ={
 #define START_CLICKED 1
 #define STOP_CLICKED  2
 
-typedef enum {SM_STARTED, SM_STOPPED, SM_START_REQUIRED, SM_STOP_REQUIRED, SM_SLEEP} MotorState;
+typedef enum {SM_STARTED, SM_STOPPED} MotorState;
+typedef enum {PWM_PIN_HI, PWM_PIN_LOW, PWM_PIN_DEBUG} PwmPin;
 
 //#define SM_STARTED        0
 //#define SM_STOPPED        1

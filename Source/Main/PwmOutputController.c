@@ -54,11 +54,15 @@ bool CheckForStartRequired(void);
 /* */
 bool CheckForStopRequired(void);
 
+/* */
+void UpdateIndex(void);
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 MotorState     _motorState    = SM_STOPPED;   // The motor control state initiate as stopped.
+PwmPin         _pwmPin        = PWM_PIN_HI;   // The pin that is currently selected for output.
 unsigned char  _buttonClicked = NONE_CLICKED; // The variable that holds the button events.
 unsigned int   _frequency     = 60;           // The variable that holds the fundamental frequency
 unsigned int   _interruptsInPwmCycle = 0;     // The variable that represents the amount of cycles that represent a full pwm cycle
@@ -76,12 +80,10 @@ unsigned long  _interruptsCounter = 0;        // The counter of already reached 
  * Input: none
  * Output: none
  */
-void PwmOuputController_Init(short freq)
+void PwmOuputController_Init(unsigned short freq)
 {
-    _frequency = freq;
-    _interruptsInPwmCycle = INTERRUPT_FREQ / (PWM_CYCLE_WITHIN_FULL_SINE * _frequency);
 
-    UpdateTonTable();
+    PwmOuputController_UpdateFrequency(freq);
 
     /* Initialize drivers */
     IntMasterEnable(); // Enable interrupts that are used within this module
@@ -97,8 +99,6 @@ void PwmOuputController_Init(short freq)
  */
 void Systick_Init(void)
 {
-
-    //TODO update if need to initialize a variable based on interrupts
 
     NVIC_ST_CTRL_R = 0;                           // disable SysTick during setup
     NVIC_ST_RELOAD_R = DEFAULT_RELOAD;            // reload value
@@ -118,12 +118,12 @@ void PwmPinsInit(void)
     unsigned long volatile delay;
     SYSCTL_RCGC2_R |= 0x00000002;     // activate port B
     delay = SYSCTL_RCGC2_R;           // execute some delay
-    GPIO_PORTB_AMSEL_R &= ~0x03;      // no analog in PB0-1
-    GPIO_PORTB_PCTL_R &= ~0x000000FF; // regular function on PB0-1
-    GPIO_PORTB_DIR_R |= 0x03;         // make PB0-1 OUT
-    //GPIO_PORTB_DR8R_R |= 0x03;        // can drive up to 8mA out
-    GPIO_PORTB_AFSEL_R &= ~0x03;      // disable alt funct on PB0-1
-    GPIO_PORTB_DEN_R |= 0x03;         // enable digital I/O on PB0-1
+    GPIO_PORTB_AMSEL_R &= ~0x07;      // no analog in PB0-2
+    GPIO_PORTB_PCTL_R &= ~0x00000FFF; // regular function on PB0-2
+    GPIO_PORTB_DIR_R |= 0x07;         // make PB0-2 OUT
+    //GPIO_PORTB_DR8R_R |= 0x07;      // can drive up to 8mA out
+    GPIO_PORTB_AFSEL_R &= ~0x07;      // disable alt funct on PB0-2
+    GPIO_PORTB_DEN_R |= 0x07;         // enable digital I/O on PB0-2
 }
 
 /* **************UpdateTonTable*********************
@@ -145,13 +145,15 @@ void UpdateTonTable(void)
 /* */
 void PwmPinOn(void)
 {
-    GPIO_PORTB_DATA_R |= 0x01;
+    if(_pwmPin == PWM_PIN_HI) GPIO_PORTB_DATA_R |= 0x01;
+    if(_pwmPin == PWM_PIN_LOW) GPIO_PORTB_DATA_R |= 0x02;
 }
 
 /* */
 void PwmPinOff(void)
 {
-    GPIO_PORTB_DATA_R &= ~0x01;
+    if(_pwmPin == PWM_PIN_HI) GPIO_PORTB_DATA_R &= ~0x01;
+    if(_pwmPin == PWM_PIN_LOW) GPIO_PORTB_DATA_R &= ~0x02;
 }
 
 /* **************PwmPin2Toogle*********************
@@ -161,7 +163,7 @@ void PwmPinOff(void)
  */
 void PwmPin2Toogle(void)
 {
-    GPIO_PORTB_DATA_R =  (GPIO_PORTB_DATA_R ^ 0x02);
+    GPIO_PORTB_DATA_R =  (GPIO_PORTB_DATA_R ^ 0x04);
 }
 
 /* ***************PwmOuputController_Start******************
@@ -173,7 +175,8 @@ void PwmPin2Toogle(void)
 void PwmOuputController_Start(void)
 {
     /* Only allow to start if the motor is currently stopped */
-    if( _motorState == SM_STOPPED ) {
+    if( _motorState == SM_STOPPED )
+    {
         /* Signalize the intention to start the motor */
         _buttonClicked = START_CLICKED;
     }
@@ -188,7 +191,8 @@ void PwmOuputController_Start(void)
 void PwmOuputController_Stop(void)
 {
     /* Only allow to start if the motor is currently stopping or stopped */
-    if( _motorState == SM_STARTED ) {
+    if( _motorState == SM_STARTED )
+    {
         /* Signalize the intention to start the motor */
         _buttonClicked = STOP_CLICKED;
     }
@@ -205,6 +209,22 @@ bool CheckForStopRequired(void)
     return (_buttonClicked == STOP_CLICKED);
 }
 
+/**/
+void UpdateIndex(void)
+{
+    if(_tonIndex < 35)
+    {
+       _tonIndex++;
+    }
+    else
+    {
+       if(_pwmPin == PWM_PIN_HI) _pwmPin = PWM_PIN_LOW;
+       else if(_pwmPin == PWM_PIN_LOW) _pwmPin = PWM_PIN_HI;
+       _tonIndex = 0;
+    }
+    _interruptsCounter = 0;
+}
+
 /* **********PwmOuputController_UpdateFrequency************
  * Update the frequency set to the motor operate
  * Input: freq - The new frequency {unsigned short}
@@ -212,7 +232,10 @@ bool CheckForStopRequired(void)
  */
 void PwmOuputController_UpdateFrequency(unsigned short freq)
 {
-    //TODO implement the update of the frequency
+    _frequency = freq;
+    _interruptsInPwmCycle = INTERRUPT_FREQ / (PWM_CYCLE_WITHIN_FULL_SINE * _frequency);
+
+    UpdateTonTable();
 }
 
 void SysTick_Handler(void)
@@ -239,8 +262,6 @@ void SysTick_Handler(void)
 
         case SM_STARTED:
 
-            LEDs_Green();
-
             if(CheckForStopRequired())
             {
                 PwmPinOff();
@@ -260,15 +281,7 @@ void SysTick_Handler(void)
                 else if( ( _interruptsCounter == _tonTable[_tonIndex] ) && ( _interruptsCounter == _interruptsInPwmCycle ) )
                 {
                     PwmPinOff();
-                    if(_tonIndex < 35)
-                    {
-                       _tonIndex++;
-                    }
-                    else
-                    {
-                       _tonIndex = 0;
-                    }
-                    _interruptsCounter = 0;
+                    UpdateIndex();
                     break;
                 }
 
@@ -280,33 +293,12 @@ void SysTick_Handler(void)
 
                 else if( _interruptsCounter == _interruptsInPwmCycle )
                 {
-                    if(_tonIndex < 35)
-                    {
-                       _tonIndex++;
-                    }
-                    else
-                    {
-                       _tonIndex = 0;
-                    }
-                    _interruptsCounter = 0;
+                    UpdateIndex();
                     break;
                 }
 
                 _interruptsCounter++;
 
-            }
-
-            break;
-
-        case SM_SLEEP:
-
-            LEDs_Red();
-
-            _interruptsCounter++;
-            if(_interruptsCounter >= 36)
-            {
-                _interruptsCounter = 0;
-                _motorState = SM_STARTED;
             }
 
             break;

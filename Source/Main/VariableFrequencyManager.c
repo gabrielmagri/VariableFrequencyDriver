@@ -7,6 +7,7 @@
 
 #include "../DeviceDrivers/PLL.h"
 #include "../DeviceDrivers/LEDs.h"
+#include "../DeviceDrivers/Keyboard.h"
 #include "VariableFrequencyManager.h"
 #include "PwmOutputController.h"
 #include "DisplayManager.h"
@@ -40,6 +41,7 @@ void VariableFrequencyManager_Init(void)
 {
     PLL_Init();
     LEDs_Init();
+    Keyboard_Init();
     PwmOuputController_Init(60);
     DisplayManager_Init();
 
