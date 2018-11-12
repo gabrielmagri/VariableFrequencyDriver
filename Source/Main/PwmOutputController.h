@@ -21,7 +21,7 @@ static const double _SinOutTable[] ={
 /* All the possible states for the button entry represents the intent to start/stop the motor */
 typedef enum {NONE_CLICKED, START_CLICKED, STOP_CLICKED} ButtonState;
 /* All the values that the motor state machine can assume */
-typedef enum {SM_STARTED, SM_STOPPED} MotorState;
+typedef enum {SM_MOTOR_UPDATING, SM_MOTOR_STARTED, SM_MOTOR_STOPPED} MotorState;
 /* The enumeration values that allow to select all the available pwm pins */
 typedef enum {PWM_PIN_HI, PWM_PIN_LOW, PWM_PIN_DEBUG} PwmPin;
 /* The possible enumeration values for state of the preTonTable */
@@ -69,5 +69,12 @@ void PwmOuputController_Stop(void);
  * Output: none
  */
 void PwmOuputController_UpdateFrequency(unsigned short freq);
+
+/* ************PwmOuputController_GetMotorState*******************
+ * Returns the current motor state
+ * Input: none
+ * Output: MotorState - the motor state
+ */
+MotorState Control_GetMotorState(void);
 
 #endif /* SOURCE_MAIN_PWMOUTPUTCONTROLLER_H_ */

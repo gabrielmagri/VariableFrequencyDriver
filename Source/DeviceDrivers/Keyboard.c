@@ -12,9 +12,9 @@
 #include "tm4c123gh6pm.h"
 
 st_velocity velocity4 = { 0,   0,  0 };
-st_velocity velocity3 = { 2,   30, 0, &velocity4 };
-st_velocity velocity2 = { 10,  10, 0, &velocity3 };
-st_velocity velocity1 = { 30,  1,  0, &velocity2 };
+st_velocity velocity3 = { 2,   10, 0, &velocity4 };
+st_velocity velocity2 = { 7,   5,  0, &velocity3 };
+st_velocity velocity1 = { 20,  1,  0, &velocity2 };
 st_velocity velocity0 = { 0,   1,  0, &velocity1 };
 st_velocity _currentVelocity;
 

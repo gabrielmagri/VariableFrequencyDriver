@@ -99,5 +99,44 @@ void DisplayManager_Init(void);
 void DisplayManager_DisplayUnisinosLogo(void);
 
 
+/* ******************displayOperationalInfo*************************
+ * This function update the whole display screen with the operational
+ * information, like motor status.
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_OperationalInfo(MotorState state, unsigned short sFreq, unsigned short aFreq);
+
+/* ******************DisplayManager_UpdatedMotorState*************************
+ * This function provides a way to update a specific display position,
+ * more precisely, the motor state position. It's update with the new state
+ * Input: none
+ * Output: none */
+void DisplayManager_UpdatedMotorState(MotorState state);
+
+/* ******************DisplayManager_ConfigInfo*************************
+ * This function update the whole display screen with the configuration
+ * information, configured timers, current selected time unit, current
+ * selected timer to be updated.
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_ConfigInfo(void);
+
+/* **************DisplayManager_UpdatedTimes*********************
+ * This function updates on the screen just the current
+ * timers. Can be called after their changes
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_UpdateSelectedFrequency(unsigned short freq);
+
+/* **************DisplayManager_UpdateActualFrequency*********************
+ * This function updates on the screen just the current
+ * timers. Can be called after their changes
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_UpdateActualFrequency(unsigned short freq);
 
 #endif /* SOURCE_MAIN_DISPLAYMANAGER_H_ */

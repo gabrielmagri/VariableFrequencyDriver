@@ -67,7 +67,7 @@ void CopyPreTonIntoTon(void);
 /////////////////////      GLOBAL VARIABLE    ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-MotorState     _motorState    = SM_STOPPED;   // The motor control state initiate as stopped.
+MotorState     _motorState    = SM_MOTOR_STOPPED;   // The motor control state initiate as stopped.
 PwmPin         _pwmPin        = PWM_PIN_HI;   // The pin that is currently selected for output.
 ButtonState    _buttonClicked = NONE_CLICKED; // The variable that holds the button events.
 TonTable       _preTonTable;
@@ -93,7 +93,7 @@ void PwmOuputController_Init(unsigned short freq)
     /* Calls the function that update the sine frequency */
     PwmOuputController_UpdateFrequency(freq);
     /* In the first execution consume the preTonTable */
-    CopyPreTonIntoTon();
+    //CopyPreTonIntoTon();
 
     /* Initialize drivers */
     IntMasterEnable(); // Enable interrupts that are used within this module
@@ -151,11 +151,12 @@ void UpdateTonTable(void)
          * The result of it is a double value that corresponds to the total pwm cycles that we need to stay in HI.
          * By adding +0.5 and casting to int we are executing a "round to the nearest" with the ton value
          * The pre ton table is full calculated into tihs routine and after is consulted to verify if there is updates or not */
-        _preTonTable.preTonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
+//        _preTonTable.preTonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
+        _tonTable[i] = (int)((double)(_interruptsInPwmCycle * _SinOutTable[i]) + 0.5);
     }
 
     /* Sinalize that the table is now updated with new values */
-    _preTonTable.tState = UPDATED;
+//    _preTonTable.tState = UPDATED;
 }
 
 /* **************CopyPreTonIntoTon*********************
@@ -224,7 +225,7 @@ void DebugPinToogle(void)
 void PwmOuputController_Start(void)
 {
     /* Only allow to start if the motor is currently stopped */
-    if( _motorState == SM_STOPPED )
+    if( _motorState == SM_MOTOR_STOPPED )
     {
         /* Signalize the intention to start the motor */
         _buttonClicked = START_CLICKED;
@@ -240,7 +241,7 @@ void PwmOuputController_Start(void)
 void PwmOuputController_Stop(void)
 {
     /* Only allow to start if the motor is currently stopping or stopped */
-    if( _motorState == SM_STARTED )
+    if( _motorState == SM_MOTOR_STARTED )
     {
         /* Signalize the intention to start the motor */
         _buttonClicked = STOP_CLICKED;
@@ -267,6 +268,15 @@ bool CheckForStopRequired(void)
     return (_buttonClicked == STOP_CLICKED);
 }
 
+/* ************PwmOuputController_GetMotorState*******************
+ * Returns the current motor state
+ * Input: none
+ * Output: MotorState - the motor state
+ */
+MotorState Control_GetMotorState(void) {
+    return _motorState;
+}
+
 /* ***************CheckForStopRequired******************
  * Update the current index within the ton table;
  * Toogle the current selected pwm pin;
@@ -287,12 +297,12 @@ void UpdateIndex(void)
        if(_pwmPin == PWM_PIN_HI) _pwmPin = PWM_PIN_LOW;
        else if(_pwmPin == PWM_PIN_LOW) _pwmPin = PWM_PIN_HI;
 
-       /* At the end of a full sine wave cycle verify if there is new ton table */
-       if( _preTonTable.tState == UPDATED )
-       {
-           /* Consume it */
-           CopyPreTonIntoTon();
-       }
+//       /* At the end of a full sine wave cycle verify if there is new ton table */
+//       if( _preTonTable.tState == UPDATED )
+//       {
+//           /* Consume it */
+//           CopyPreTonIntoTon();
+//       }
 
        _tonIndex = 0;
     }
@@ -327,24 +337,25 @@ void SysTick_Handler(void)
     switch(_motorState)
     {
 
-        case SM_STOPPED:
+        case SM_MOTOR_STOPPED:
 
             LEDs_None();
 
             if(CheckForStartRequired())
             {
-                _motorState = SM_STARTED;
+                _motorState = SM_MOTOR_STARTED;
                 _interruptsCounter = 0;
                 _tonIndex = 0;
             }
 
             break;
 
-        case SM_STARTED:
+        case SM_MOTOR_STARTED:
 
             if(CheckForStopRequired())
             {
                 PwmPinOff();
+                _motorState = SM_MOTOR_STOPPED;
             }
             else
             {
@@ -374,7 +385,7 @@ void SysTick_Handler(void)
                 /* If reached the total number of pwm cycles, the function shall execute
                  *  the resets and the pwm selected pin toogle.
                  * */
-                else if( _interruptsCounter == _interruptsInPwmCycle )
+                else if( _interruptsCounter >= _interruptsInPwmCycle )
                 {
                     UpdateIndex();
                     break;

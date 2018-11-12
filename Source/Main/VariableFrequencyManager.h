@@ -8,10 +8,10 @@
 #ifndef SOURCE_MAIN_VARIABLEFREQUENCYMANAGER_H_
 #define SOURCE_MAIN_VARIABLEFREQUENCYMANAGER_H_
 
-#define SM_NORMAL      0
-#define SM_CONFIGURING 1
-//TODO remove, just for debug
-#define SM_WAIT 2
+#define UPPER_BOUND 90
+#define LOWER_BOUND 30
+
+typedef enum {SM_INITIALIZING, SM_NORMAL, SM_CONFIGURING, SM_UPDATING} StateMachine;
 
 /* ********VariableFrequencyManager_Init**********
  * This function initialize all the device drivers
