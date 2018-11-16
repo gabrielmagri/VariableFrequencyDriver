@@ -19,7 +19,6 @@
  *      Author: GMAGRI
  */
 
-#include "../DeviceDrivers/LEDs.h"
 #include "PwmOutputController.h"
 #include "tm4c123gh6pm.h"
 #include <stdint.h>
@@ -98,7 +97,6 @@ void PwmOuputController_Init(unsigned short freq)
     /* Initialize drivers */
     IntMasterEnable(); // Enable interrupts that are used within this module
     PwmPinsInit();     // Initialize the Driver for the pwm pins
-    LEDs_Init();       // Initialize the LEDs driver
     Systick_Init();    // Initilize the Systick Interrupt
 }
 
@@ -339,8 +337,6 @@ void SysTick_Handler(void)
 
         case SM_MOTOR_STOPPED:
 
-            LEDs_None();
-
             if(CheckForStartRequired())
             {
                 _motorState = SM_MOTOR_STARTED;
@@ -404,5 +400,7 @@ void SysTick_Handler(void)
         default:
             break;
     }
+
+    InterruptPinToogle();
 
 }

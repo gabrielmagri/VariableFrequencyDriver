@@ -24,17 +24,27 @@ st_velocity _currentVelocity;
 // Output: none
 void Keyboard_Init(void) {
     unsigned long volatile delay;
-	SYSCTL_RCGC2_R |= 0x00000010;     // activate port E
-	delay = SYSCTL_RCGC2_R;           // execute some delay
-	GPIO_PORTE_AMSEL_R &= ~0x0F;      // no analog in PE0-3
-	GPIO_PORTE_PCTL_R &= ~0x0000FFFF; // regular function on PE0-3
-	GPIO_PORTE_DIR_R &= ~0x0F;        // make PE0-3 IN
-	//GPIO_PORTE_DR8R_R |= 0x04;      // can drive up to 8mA out
-	GPIO_PORTE_AFSEL_R &= ~0x0F;      // disable alt funct on PE0-3
-	GPIO_PORTE_DEN_R |= 0x0F;         // enable digital I/O on PE0-3
+	SYSCTL_RCGC2_R |= 0x00000010;             // activate port E
+	delay = SYSCTL_RCGC2_R;                   // execute some delay
+	GPIO_PORTE_AMSEL_R &= ~ENABLED_KEYS_MASK; // no analog in PE0-4
+	GPIO_PORTE_PCTL_R &= ~0x000FFFFF;         // regular function on PE0-4
+	GPIO_PORTE_DIR_R &= ~ENABLED_KEYS_MASK;   // make PE0-4 IN
+	//GPIO_PORTE_DR8R_R |= 0x04;              // can drive up to 8mA out
+	GPIO_PORTE_AFSEL_R &= ~ENABLED_KEYS_MASK; // disable alt funct on PE0-4
+	GPIO_PORTE_DEN_R |= ENABLED_KEYS_MASK;    // enable digital I/O on PE0-4
 	
 	_currentVelocity = velocity0;
 	
+}
+
+// **************Keyboard_InNoDebounce*********************
+// Input from keyboard's key inputs
+// This function output without debounce
+// Input: none
+// Output: 0 to 1F depending on keys combination
+unsigned long Keyboard_InNoDebounce(void) {
+    // Read and return the current keys input status
+    return (GPIO_PORTE_DATA_R & ENABLED_KEYS_MASK);
 }
 
 // **************Keyboard_In*********************
@@ -50,7 +60,7 @@ unsigned long Keyboard_In(void) {
 	unsigned long _currentStatus                     = 0;
 	
 	// Read the current keys input status
-	_currentStatus = (GPIO_PORTE_DATA_R & 0X0F);
+	_currentStatus = (GPIO_PORTE_DATA_R & ENABLED_KEYS_MASK);
 	
 	// if there is some key pressed and the value still the same increment the debounce counter.
 	// This statement make it only possible to acionate alternating the keys.
@@ -98,7 +108,7 @@ unsigned long Keyboard_Continuous_In(void) {
 	static char _outputed                           = 0;
 	
 	// Read the current keys input status
-	_currentStatus = (GPIO_PORTE_DATA_R & 0X0F);
+	_currentStatus = (GPIO_PORTE_DATA_R & ENABLED_KEYS_MASK);
 	
 	// if there is some key pressed and the value still the same increment the debounce counter.
 	if( (_currentStatus != 0) && (_currentStatus == _lastCurrentPressingStatus) ) {

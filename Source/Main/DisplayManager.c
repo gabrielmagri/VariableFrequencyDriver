@@ -5,10 +5,12 @@
  *      Author: GMAGRI
  */
 
+#include <stdbool.h>
+
 #include "PwmOutputController.h"
 #include "DisplayManager.h"
 #include "../DeviceDrivers/Nokia5110.h"
-
+#include "../DeviceDrivers/LEDs.h"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -46,18 +48,24 @@ void DisplayManager_DisplayUnisinosLogo(void)
  * information, like motor status and configured timers.
  * Input: none
  * Output: none */
-void DisplayManager_OperationalInfo(MotorState state, unsigned short sFreq, unsigned short aFreq)
+void DisplayManager_OperationalInfo(MotorState state, unsigned short sFreq, unsigned short aFreq, bool smooth)
 {
     Nokia5110_Clear();
     switch(state) {
+        case SM_MOTOR_INITIAL:
+            Nokia5110_OutString("   INIT    ");
+            DisplayManager_UpdateSmoothIndicator(smooth);
         case SM_MOTOR_STARTED:
-            Nokia5110_OutString("  STARTED   ");
+            Nokia5110_OutString("  STARTED  ");
+            DisplayManager_UpdateSmoothIndicator(smooth);
             break;
         case SM_MOTOR_STOPPED:
-            Nokia5110_OutString("  STOPPED   ");
+            Nokia5110_OutString("  STOPPED  ");
+            DisplayManager_UpdateSmoothIndicator(smooth);
             break;
         case SM_MOTOR_UPDATING:
-            Nokia5110_OutString("  UPDATING  ");
+            Nokia5110_OutString("  UPDATING ");
+            DisplayManager_UpdateSmoothIndicator(smooth);
             break;
         default:
             break;
@@ -83,13 +91,13 @@ void DisplayManager_UpdatedMotorState(MotorState state)
     Nokia5110_SetCursor(0, 0);
     switch(state) {
         case SM_MOTOR_STARTED:
-            Nokia5110_OutString("  STARTED   ");
+            Nokia5110_OutString("  STARTED  ");
             break;
         case SM_MOTOR_STOPPED:
-            Nokia5110_OutString("  STOPPED   ");
+            Nokia5110_OutString("  STOPPED  ");
             break;
         case SM_MOTOR_UPDATING:
-            Nokia5110_OutString("  UPDATING  ");
+            Nokia5110_OutString("  UPDATING ");
             break;
         default:
             break;
@@ -131,5 +139,16 @@ void DisplayManager_UpdateSelectedFrequency(unsigned short freq) {
 void DisplayManager_UpdateActualFrequency(unsigned short freq) {
     Nokia5110_SetCursor(0, 5);
     Nokia5110_OutUDec(freq);
+}
+
+/* **************DisplayManager_UpdateSmoothIndicator*********************
+ * This function updates on the screen the smooth update indicator
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_UpdateSmoothIndicator(bool smooth) {
+    Nokia5110_SetCursor(11, 0);
+    if(smooth == true) Nokia5110_OutString("*");
+    else if(smooth == false) Nokia5110_OutString(" ");
 }
 

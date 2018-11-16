@@ -21,7 +21,7 @@ static const double _SinOutTable[] ={
 /* All the possible states for the button entry represents the intent to start/stop the motor */
 typedef enum {NONE_CLICKED, START_CLICKED, STOP_CLICKED} ButtonState;
 /* All the values that the motor state machine can assume */
-typedef enum {SM_MOTOR_UPDATING, SM_MOTOR_STARTED, SM_MOTOR_STOPPED} MotorState;
+typedef enum {SM_MOTOR_INITIAL, SM_MOTOR_UPDATING, SM_MOTOR_STARTED, SM_MOTOR_STOPPED} MotorState;
 /* The enumeration values that allow to select all the available pwm pins */
 typedef enum {PWM_PIN_HI, PWM_PIN_LOW, PWM_PIN_DEBUG} PwmPin;
 /* The possible enumeration values for state of the preTonTable */
@@ -40,6 +40,7 @@ typedef struct
 #define INTERRUPT_FREQ 233280
 /* The desired number of pwm cycles within the full sine wave, used for futher calculations */
 #define PWM_CYCLE_WITHIN_FULL_SINE 72
+
 
 /* ***************PwmOuputController_Init******************
  * This function performs the whole initialization needed

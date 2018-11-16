@@ -18,6 +18,8 @@ static const unsigned long DEBOUNCE_BOUND = (unsigned long)2000000;
 #define KEY_TWO   0X02
 #define KEY_THREE 0X04
 #define KEY_FOUR  0X08
+#define KEY_FIVE  0X16
+#define ENABLED_KEYS_MASK 0x1F
 
 // A struct that represents a volicity instance when using continuos keyboard input
 struct velocity {
@@ -33,6 +35,13 @@ typedef struct velocity st_velocity;
 // Input: none
 // Output: none
 void Keyboard_Init(void);
+
+// **************Keyboard_InNoDebounce*********************
+// Input from keyboard's key inputs
+// This function output without debounce
+// Input: none
+// Output: 0 to 1F depending on keys combination
+unsigned long Keyboard_InNoDebounce(void);
 
 // **************Keyboard_In*********************
 // Input from keyboard's key inputs

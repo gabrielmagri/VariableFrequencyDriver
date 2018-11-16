@@ -8,6 +8,8 @@
 #ifndef SOURCE_MAIN_DISPLAYMANAGER_H_
 #define SOURCE_MAIN_DISPLAYMANAGER_H_
 
+#include <stdbool.h>
+
 /* A Unisinos 84x48 single color bitmap image to be displayed on startup */
 static const unsigned char _logoUni[] ={
  0x42, 0x4D, 0xB6, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x76, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00,
@@ -105,7 +107,7 @@ void DisplayManager_DisplayUnisinosLogo(void);
  * Input: none
  * Output: none
  */
-void DisplayManager_OperationalInfo(MotorState state, unsigned short sFreq, unsigned short aFreq);
+void DisplayManager_OperationalInfo(MotorState state, unsigned short sFreq, unsigned short aFreq, bool smooth);
 
 /* ******************DisplayManager_UpdatedMotorState*************************
  * This function provides a way to update a specific display position,
@@ -138,5 +140,12 @@ void DisplayManager_UpdateSelectedFrequency(unsigned short freq);
  * Output: none
  */
 void DisplayManager_UpdateActualFrequency(unsigned short freq);
+
+/* **************DisplayManager_UpdateSmoothIndicator*********************
+ * This function updates on the screen the smooth update indicator
+ * Input: none
+ * Output: none
+ */
+void DisplayManager_UpdateSmoothIndicator(bool smooth);
 
 #endif /* SOURCE_MAIN_DISPLAYMANAGER_H_ */
