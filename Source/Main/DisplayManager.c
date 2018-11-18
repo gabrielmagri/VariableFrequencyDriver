@@ -10,7 +10,6 @@
 #include "PwmOutputController.h"
 #include "DisplayManager.h"
 #include "../DeviceDrivers/Nokia5110.h"
-#include "../DeviceDrivers/LEDs.h"
 
 ////////////////////////////////////////////////////////////////////
 

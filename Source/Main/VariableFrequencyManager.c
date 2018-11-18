@@ -8,6 +8,10 @@
 #include "../DeviceDrivers/PLL.h"
 #include "../DeviceDrivers/LEDs.h"
 #include "../DeviceDrivers/Keyboard.h"
+#include "../DeviceDrivers/UART.h"
+#include "../DeviceDrivers/ADCSWTrigger.h"
+#include "../DeviceDrivers/Timer0.h"
+#include "../DeviceDrivers/Debug.h"
 #include "VariableFrequencyManager.h"
 #include "PwmOutputController.h"
 #include "DisplayManager.h"
@@ -19,6 +23,9 @@
 
 /* Execute the initialize routine  */
 void InitializeRoutine(void);
+
+/* Take one sample from the motor current and send it through UART0 */
+void CurrentSampleHook(void);
 
 /* Execute the normal routine  */
 void NormalRoutine(void);
@@ -45,6 +52,8 @@ static unsigned short _selectedFrequency = 60;
 static unsigned short _actualFrequency = 0;
 /* Flag that enable the smooth update between two different frequencies */
 static bool _smoothUpdateEnabled = true;
+/*  */
+volatile unsigned long ADCvalue;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -58,13 +67,26 @@ static bool _smoothUpdateEnabled = true;
 void VariableFrequencyManager_Init(void)
 {
     PLL_Init();
+
+    /* Initialize and display the Unisinos logo into the whole screen */
+    DisplayManager_Init();
+    DisplayManager_DisplayUnisinosLogo();
+
     LEDs_Init();
     Keyboard_Init();
     PwmOuputController_Init(_actualFrequency);
-    DisplayManager_Init();
 
-    /* Display the Unisinos logo into the whole screen */
-    DisplayManager_DisplayUnisinosLogo();
+    UART_Init();
+    ADC0_InitSWTriggerSeq3_Ch1();
+
+    /* Initialize timer0 (1800 Hz) = (~90*20)
+     * 1800 Hz allows us to read at least 20 times per cycle
+     * into the highest frequency, that is 90 Hz
+     * 80MHz/1800 = 44444.44...
+     * Maximum is 115200/32 = 3600*/
+    Timer0_Init(&CurrentSampleHook, 44444);
+
+    Debug_Init();
 
 }
 
@@ -98,6 +120,7 @@ void VariableFrequencyManager_Run(void)
 /* Execute the initialize routine  */
 void InitializeRoutine(void)
 {
+    VariableFrequencyManager_Init();
     DisplayManager_OperationalInfo(_lastMotorStatus, _selectedFrequency, _actualFrequency, _smoothUpdateEnabled);
     _state = SM_NORMAL;
 }
@@ -201,7 +224,7 @@ void UpdateRoutine(void)
                     _actualFrequency++;
                     DisplayManager_UpdateActualFrequency(_actualFrequency);
                     PwmOuputController_UpdateFrequency(_actualFrequency);
-                    for (j = 0; j < 500000; ++j);
+                    for (j = 0; j < 100000; ++j);
                 }
 
             }
@@ -222,7 +245,7 @@ void UpdateRoutine(void)
                     _actualFrequency--;
                     DisplayManager_UpdateActualFrequency(_actualFrequency);
                     PwmOuputController_UpdateFrequency(_actualFrequency);
-                    for (j = 0; j < 500000; ++j);
+                    for (j = 0; j < 100000; ++j);
                 }
 
             }
@@ -253,5 +276,39 @@ void checkBounds(void) {
         _selectedFrequency = LOWER_BOUND;
     }
 }
+
+/* **************ReadADCHook*********************
+ * Take one sample from the motor current and send it through UART0
+ * Input: none
+ * Output: none
+ */
+void CurrentSampleHook(void)
+{
+    ADCvalue = ADC0_InSeq3();
+    UART_OutUDec(ADCvalue);
+    //UART_OutChar('\n');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

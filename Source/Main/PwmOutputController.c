@@ -19,11 +19,13 @@
  *      Author: GMAGRI
  */
 
+#include "../DeviceDrivers/Debug.h"
 #include "PwmOutputController.h"
 #include "tm4c123gh6pm.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "driverlib/interrupt.h"
+
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////      LOCAL FUNCTIONS PROTOTYPES    //////////////////////////
@@ -126,12 +128,12 @@ void PwmPinsInit(void)
     unsigned long volatile delay;
     SYSCTL_RCGC2_R |= 0x00000002;     // activate port B
     delay = SYSCTL_RCGC2_R;           // execute some delay
-    GPIO_PORTB_AMSEL_R &= ~0x0F;      // no analog in PB0-2
-    GPIO_PORTB_PCTL_R &= ~0x0000FFFF; // regular function on PB0-2
-    GPIO_PORTB_DIR_R |= 0x0F;         // make PB0-2 OUT
-    //GPIO_PORTB_DR8R_R |= 0x07;      // can drive up to 8mA out
-    GPIO_PORTB_AFSEL_R &= ~0x0F;      // disable alt funct on PB0-2
-    GPIO_PORTB_DEN_R |= 0x0F;         // enable digital I/O on PB0-2
+    GPIO_PORTB_AMSEL_R &= ~0x03;      // no analog in PB0-1
+    GPIO_PORTB_PCTL_R &= ~0x000000FF; // regular function on PB0-1
+    GPIO_PORTB_DIR_R |= 0x03;         // make PB0-1 OUT
+    //GPIO_PORTB_DR8R_R |= 0x03;      // can drive up to 8mA out
+    GPIO_PORTB_AFSEL_R &= ~0x03;      // disable alt funct on PB0-1
+    GPIO_PORTB_DEN_R |= 0x03;         // enable digital I/O on PB0-1
 }
 
 /* **************UpdateTonTable*********************
@@ -329,7 +331,8 @@ void PwmOuputController_UpdateFrequency(unsigned short freq)
 void SysTick_Handler(void)
 {
 
-    InterruptPinToogle();
+    //InterruptPinToogle();
+    Debug_TooglePin_1();
 
     /* Unique motor state machine routine */
     switch(_motorState)
@@ -401,6 +404,7 @@ void SysTick_Handler(void)
             break;
     }
 
-    InterruptPinToogle();
+    //InterruptPinToogle();
+    Debug_TooglePin_1();
 
 }

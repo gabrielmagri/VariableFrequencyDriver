@@ -11,7 +11,7 @@
 static const unsigned long DEBOUNCE_BOUND = (unsigned long)2000000;
 
 // The current debounce value when reading keys
-#define DEBOUNCE_VALUE 10000
+#define DEBOUNCE_VALUE 8000
 
 // The keys currently available to be read by this device driver
 #define KEY_ONE   0X01
