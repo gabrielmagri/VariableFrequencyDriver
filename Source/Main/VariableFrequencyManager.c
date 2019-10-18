@@ -85,6 +85,7 @@ void VariableFrequencyManager_Init(void)
      * 80MHz/1800 = 44444.44...
      * Maximum is 115200/32 = 3600*/
     Timer0_Init(&CurrentSampleHook, 44444);
+//    Timer0_Init(&CurrentSampleHook, 80000000);
 
     Debug_Init();
 
@@ -286,7 +287,8 @@ void CurrentSampleHook(void)
 {
     ADCvalue = ADC0_InSeq3();
     UART_OutUDec(ADCvalue);
-    //UART_OutChar('\n');
+    //UART_OutUDec(PwmOuputController_GetCurrentTon());
+    UART_OutChar('|'); //This is the byte that synchronize with the Labview
 }
 
 

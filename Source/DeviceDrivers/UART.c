@@ -5,6 +5,7 @@
 // September 11, 2013
 // Modified by EE345L students Charlie Gough && Matt Hawk
 // Modified by EE345M students Agustinus Darmawan && Mingjie Qiu
+// Modified by Gabriel Magri (18/11/2018)
 
 /* This example accompanies the book
    "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
@@ -135,14 +136,33 @@ char character;
 // Input: 32-bit number to be transferred
 // Output: none
 // Variable format 1-10 digits with no space before or after
-void UART_OutUDec(unsigned long n){
+void UART_OutUDec(unsigned long n)
+{
 // This function uses recursion to convert decimal number
 //   of unspecified length as an ASCII string
-  if(n >= 10){
+  if(n >= 10)
+  {
     UART_OutUDec(n/10);
     n = n%10;
   }
   UART_OutChar(n+'0'); /* n is between 0 and 9 */
+}
+
+/* -----------------------UART_OutFixedLenUDec-----------------------
+ * Output a 32-bit number truncated to the last "length" digits
+ * Input: n      - 32-bit number to be transferred
+ *        length - The number of digits (Least significant) to output
+ */
+void UART_OutFixedLenUDec(unsigned long n, unsigned short length)
+{
+    int i = length;
+    unsigned short digit = 0;
+    /* Output in a MSB first manner */
+    for (i = length; i > 0; --i)
+    {
+        digit = ( ( n >> i ) & 0x00000001 );
+        UART_OutChar(digit + '0'); /* digit is between 0 and 9 */
+    }
 }
 
 //---------------------UART_InUHex----------------------------------------

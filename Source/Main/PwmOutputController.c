@@ -325,6 +325,11 @@ void PwmOuputController_UpdateFrequency(unsigned short freq)
     UpdateTonTable();
 }
 
+unsigned int PwmOuputController_GetCurrentTon(void)
+{
+    return _tonTable[_tonIndex];
+}
+
 /* This is the ISR (Interrupt Service Routin) that handle the Systick Interrupts
  * The ISR is responsible mainly for the output of the pwm pins, based on the frequency
  *  and the motor state, and for updating the LEDs that sinalize the motor state to the user. */

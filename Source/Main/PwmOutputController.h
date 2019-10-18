@@ -71,6 +71,8 @@ void PwmOuputController_Stop(void);
  */
 void PwmOuputController_UpdateFrequency(unsigned short freq);
 
+unsigned int PwmOuputController_GetCurrentTon(void);
+
 /* ************PwmOuputController_GetMotorState*******************
  * Returns the current motor state
  * Input: none
